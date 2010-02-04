@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+"""
+UDP Multicast Sender.
+"""
+
+import socket
+import time
+import sys
+import optparse
+
+version="1.0"
+
+# Parse cmdline options
+parser = optparse.OptionParser(version="%prog " + version)
+parser.add_option("-d", "--destination-addr", dest="dest",
+                  help="throw packet to DEST", metavar="DEST")
+parser.add_option("-p", "--destination-port", dest="port",
+                  help="throw packet to PORT", metavar="PORT")
+parser.add_option("-s", "--source-addr", dest="src",
+                  help="throw packet from SRC", metavar="SRC")
+parser.add_option("-m", "--message", dest="msg",
+                  help="Message", default="HELLO")
+options, args = parser.parse_args()
+if options.src == None :
+    parser.error("option -s not specified")
+if options.dest == None :
+    parser.error("option -d not specified")
+if options.port == None :
+    parser.error("option -p not specified")
+
+# UDP Socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+from_addr = options.src
+to_addr = options.dest
+to_port = int(options.port)
+
+sock.setsockopt(socket.IPPROTO_IP,
+                socket.IP_MULTICAST_IF,
+                socket.inet_aton(from_addr))
+
+while True:
+    sock.sendto(options.msg, (to_addr, to_port))
+    time.sleep(0.5)
+
