@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+"""
+UDP Multicast Receiver.
+"""
+
+import socket
+import time
+import sys
+import optparse
+import struct
+
+version="1.0"
+
+# Parse cmdline options
+parser = optparse.OptionParser(version="%prog " + version)
+parser.add_option("-m", "--multicast-addr", dest="mc_addr",
+                  help="Multicast addr receive from MC", metavar="MC")
+parser.add_option("-p", "--multicast-port", dest="port",
+                  help="Multicast port receive from PORT", metavar="PORT")
+parser.add_option("-l", "--listen-addr", dest="listen_addr",
+                  help="Listen on addr LA", metavar="LA")
+options, args = parser.parse_args()
+if options.mc_addr == None :
+    parser.error("option -m not specified")
+if options.listen_addr == None :
+    parser.error("option -l not specified")
+if options.port == None :
+    parser.error("option -p not specified")
+
+## UDP Socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+listen_addr = options.listen_addr
+mc_addr = options.mc_addr
+port = int(options.port)
+
+## Set to be multicast
+sock.setsockopt(socket.IPPROTO_IP,
+                socket.IP_MULTICAST_IF,
+                socket.inet_aton(listen_addr))
+
+sock.bind(('', port))
+
+## Make the socket "join" the membership of multicasting
+## Both code seems to work correctly
+#mreq = struct.pack("4sl", socket.inet_aton(mc_addr), socket.INADDR_ANY)
+# sock.setsockopt(socket.IPPROTO_IP,
+#                 socket.IP_ADD_MEMBERSHIP,
+#                 mreq)
+sock.setsockopt(socket.IPPROTO_IP,
+                socket.IP_ADD_MEMBERSHIP,
+                socket.inet_aton(mc_addr) + socket.inet_aton(listen_addr))
+
+while True:
+    #sock.sendto(options.msg, (to_addr, to_port))
+    #time.sleep(0.5)
+    str, from_addr = sock.recvfrom(4096)
+    print "%s (from %s)" % (str, from_addr)
